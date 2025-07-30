@@ -91,18 +91,48 @@
       document.getElementById('users-list').textContent = 'User management coming soon...';
     }
     function loadTasks() {
-      document.getElementById('tasks-list').textContent = 'Task management coming soon...';
+      fetch('/api/tasks')
+        .then(res => res.json())
+        .then(tasks => {
+          const list = document.getElementById('tasks-list');
+          if (!Array.isArray(tasks) || tasks.length === 0) {
+            list.textContent = 'No tasks yet.';
+            return;
+          }
+          list.innerHTML = '';
+          tasks.forEach(task => {
+            const div = document.createElement('div');
+            div.textContent = task.title + ' ';
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.onclick = () => deleteTask(task.id);
+            div.appendChild(delBtn);
+            list.appendChild(div);
+          });
+        });
     }
-    // Add task form handler (demo only)
     document.getElementById('add-task-form').onsubmit = function(e) {
       e.preventDefault();
       const title = document.getElementById('task-title').value;
       if (title) {
-        // Here you would send a request to your backend to add the task
-        alert('Task "' + title + '" added (demo only)');
-        document.getElementById('task-title').value = '';
+        fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('task-title').value = '';
+          loadTasks();
+        });
       }
     };
+    function deleteTask(taskId) {
+      fetch('/api/tasks/' + taskId, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(() => loadTasks());
+    }
   </script>
 </body>
 </html> 
